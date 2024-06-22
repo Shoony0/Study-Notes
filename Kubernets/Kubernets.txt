@@ -1,0 +1,499 @@
+##################### learning ##############################
+# start minikube different ip
+docker stop $(docker ps -aq); docker rm $(docker ps -a -q); docker container prune; docker image prune; docker network prune
+docker rmi -f $(docker images -aq)
+
+minikube start --driver docker --static-ip 192.168.200.200
+minkube start/delete
+minikube dashboard
+
+
+kubectl cluster-info
+
+# Create pods
+kubectl create deployment my-nginx --image=nginx
+kubectl get deployment
+
+kubectl get pods
+
+kubectl delete deployment my-app
+
+kubectl expose deployment my-nginx --port=80 --type=LoadBalancer
+kubectl get services
+minikube service my-nginx
+
+
+kubectl describe node
+kubectl delete node minikube
+minikube logs -f
+kubectl logs <pod name>
+kubectl describe pods
+
+# deployment on live server
+kubectl set image deployment my-webapp my-webapp=shunya0/my-webapp:05
+
+## if we put wrong docker images
+kubectl rollout status deployment my-webapp
+## rolled back the wrong deployment
+kubectl rollout undo deployment my-webapp
+
+$ kubectl get pods 
+NAME                        READY   STATUS      RESTARTS      AGE
+node-app-7cd49876cb-glzkk   0/1     Completed   3 (58s ago)   4m25s
+
+## scale the deployment
+kubectl scale deployment node-app --replicas=4
+
+################## config file ##################
+## for Deployment
+https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.30/
+https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.30/#deployment-v1-apps
+
+
+Run the config file
+ kubectl apply -f  deployment-node-app.yml
+ 
+# for Service
+
+https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.30/#service-v1-core
+kubectl apply -f  service-nodea-app.yml
+minikube service service-node-app
+
+## deleting the deployment
+kubectl delete -f  deployment-node-app.yml
+
+# get what is running on particular posr
+sudo netstat -nlpt|grep :8080
+
+
+
+sudo kubeadm init --pod-network-cidr=10.244.0.0/16
+
+https://github.com/kubernetes/kubeadm/issues/700
+sudo kubeadm init --pod-network-cidr=10.244.0.0/16 --ignore-preflight-errors=all
+
+
+
+To start using your cluster, you need to run the following as a regular user:
+
+  mkdir -p $HOME/.kube
+  sudo cp -i /etc/kubernetes/admin.conf $HOME/.kube/config
+  sudo chown $(id -u):$(id -g) $HOME/.kube/config
+
+Alternatively, if you are the root user, you can run:
+
+  export KUBECONFIG=/etc/kubernetes/admin.conf
+
+You should now deploy a pod network to the cluster.
+Run "kubectl apply -f [podnetwork].yaml" with one of the options listed at:
+  https://kubernetes.io/docs/concepts/cluster-administration/addons/
+
+Then you can join any number of worker nodes by running the following on each as root:
+
+kubeadm join 172.16.20.34:6443 --token 0uz2ly.lqe65cilwdlv1dzf --discovery-token-ca-cert-hash sha256:85b952025f751c9d32e16a0543373e29b7b1bcba429b8a994d93708dde598be6
+
+  
+Delete All Resources in All Namespaces
+kubectl delete all --all --all-namespaces
+kubectl delete all --all -A
+
+#### restart kube ########
+sudo systemctl restart kubelet
+sudo systemctl status kubelet
+sudo systemctl restart docker
+
+######################### How to Install a Multi-Node Kubernetes Cluster on Ubuntu ################
+
+Step 1 – Disable Swap and Enable IP Forwarding
+
+Memory swapping causes performance and stability issues within Kubernetes, so it is recommended to disable Swap and enable IP forwarding on all nodes.
+
+First, verify whether Swap is enabled or not using the following command:
+
+swapon --show
+If Swap is enabled, you will get the following output:
+
+NAME      TYPE   SIZE USED PRIO
+/swapfile file 472.5M   0B   -2
+Next, run the following command to disable Swap:
+
+$ swapoff -a
+To disable Swap permanently, edit the /etc/fstab file and comment the line containing swapfile:
+
+nano /etc/fstab
+Comment or remove the following line:
+
+#/swapfile                                 none            swap    sw              0       0
+Next, edit the /etc/sysctl.conf file to enable the IP forwarding:
+
+nano /etc/sysctl.conf
+Un-comment the following line:
+
+net.ipv4.ip_forward = 1
+Save and close the file, then run the following command to apply the configuration changes:
+
+sysctl -p
+Also Read
+How to Install Docker on Ubuntu 20.04 LTS
+
+Step 2 – Install Docker CE
+Kubernetes relies on a Docker container, so you will need to install the Docker CE on all nodes. The latest version of the Docker CE is not included in the Ubuntu default repository, so you will need to add Docker’s official repository to APT.
+
+First, install the required dependencies to access Docker repositories over HTTPS:
+
+apt-get install apt-transport-https ca-certificates curl software-properties-common -y
+Next, run the curl command to download and add Docker’s GPG key:
+
+curl -fsSL https://download.docker.com/linux/ubuntu/gpg | apt-key add -
+Next, add Docker’s official repository to the APT:
+
+add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu  $(lsb_release -cs)  stable"
+Once the repository is added, run the following command to install Docker CE:
+
+apt-get install docker-ce -y
+After the installation, verify the Docker installation using the following command:
+
+docker --version
+Sample output:
+
+Docker version 20.10.10, build b485636
+Step 3 – Add Kubernetes Repository
+By default, the Kubernetes package is not included in the Ubuntu 20.04 default repository, so you will need to add the Kubernetes repository to all nodes.
+
+First, add the Kubernetes GPG key:
+
+curl -s https://packages.cloud.google.com/apt/doc/apt-key.gpg | apt-key add
+Next, add the Kubernetes repository to APT:
+
+apt-add-repository "deb http://apt.kubernetes.io/ kubernetes-xenial main"
+Once the repository is added, update the APT cache using the command below:
+
+apt-get update -y
+Step 4 – Install Kubernetes Components (Kubectl, kubelet and kubeadm)
+Kubernetes depends on three major components (Kubectl, kubelet and kubeadm) that make up a Kubernetes run time environment. All three components must be installed on each node.
+
+Let’s run the following command on all nodes to install all Kubernetes components:
+
+apt-get install kubelet kubeadm kubectl -y
+Next, you will need to update the cgroupdriver on all nodes. You can do it by creating the following file:
+
+nano /etc/docker/daemon.json
+Add the following lines:
+
+{ "exec-opts": ["native.cgroupdriver=systemd"],
+"log-driver": "json-file",
+"log-opts":
+{ "max-size": "100m" },
+"storage-driver": "overlay2"
+}
+Save and close the file, then reload the systemd daemon and restart the Docker service with the following command:
+
+systemctl daemon-reload
+systemctl restart docker
+systemctl enable docker
+At this point, all Kubernetes components are installed. Now, you can proceed to the next step.
+
+Step 5 – Initialize Kubernetes Master Node
+The Kubernetes Master node is responsible for managing the state of the Kubernetes cluster. In this section, we will show you how to initialize the Kubernetes Master node.
+
+Run the kubeadm command-line tool to initialize the Kubernetes cluster.
+
+kubeadm init --pod-network-cidr=10.244.0.0/16
+Once the Kubernetes cluster has been initialized successfully, you will get the following output:
+
+Your Kubernetes control-plane has initialized successfully!
+
+To start using your cluster, you need to run the following as a regular user:
+
+mkdir -p $HOME/.kube
+sudo cp -i /etc/kubernetes/admin.conf $HOME/.kube/config
+sudo chown $(id -u):$(id -g) $HOME/.kube/config
+
+Alternatively, if you are the root user, you can run:
+
+export KUBECONFIG=/etc/kubernetes/admin.conf
+
+You should now deploy a pod network to the cluster.
+Run "kubectl apply -f [podnetwork].yaml" with one of the options listed at:
+https://kubernetes.io/docs/concepts/cluster-administration/addons/
+
+Then you can join any number of worker nodes by running the following on each as root:
+
+kubeadm join 69.28.84.197:6443 --token tx7by6.nae8saexoj2y3gqb \
+--discovery-token-ca-cert-hash sha256:a506a51aa88791b456275b289bedc5d3316534ff67475fdbc7c2c64ace82652f 
+From the above output, copy or note down the kubeadm join full command. You will need to run this command on all worker nodes to join the Kubernetes cluster.
+
+If you are logged in as a regular user then run the following command to start using your cluster:
+
+mkdir -p $HOME/.kube
+sudo cp -i /etc/kubernetes/admin.conf $HOME/.kube/config
+sudo chown $(id -u):$(id -g) $HOME/.kube/config
+If you are the root user, you can run the following command:
+
+export KUBECONFIG=/etc/kubernetes/admin.conf
+At this point, the Kubernetes cluster is initialized. You can now proceed to add a pod network.
+
+Also Read
+How to Use chmod (Change Mode) Command in Linux
+
+Step 6 – Deploy a Pod Network
+The pod network is used for communication between all nodes within the Kubernetes cluster and is necessary for the Kubernetes cluster to function properly. In this section, we will add a Flannel pod network on the Kubernetes cluster. Flannel is a virtual network that attaches IP addresses to containers.
+
+Run the following command on the Master node to deploy a Flannel pod network.
+
+kubectl apply -f https://raw.githubusercontent.com/coreos/flannel/master/Documentation/kube-flannel.yml
+kubectl apply -f https://raw.githubusercontent.com/coreos/flannel/master/Documentation/k8s-manifests/kube-flannel-rbac.yml
+Next, wait for some time for the pods to be in running state. Then, run the following command to see the status of all pods:
+
+kubectl get pods --all-namespaces
+If everything is fine, you will get the following output:
+
+NAMESPACE     NAME                                       READY   STATUS              RESTARTS        AGE
+kube-system   calico-kube-controllers-5d995d45d6-tfdk9   1/1     Running            0                66m
+kube-system   calico-node-5v5ll                          1/1     Running            0                66m
+kube-system   calico-node-rws9b                          1/1     Running            0                66m
+kube-system   calico-node-tkc8p                          1/1     Running            0                66m
+kube-system   coredns-78fcd69978-7ggpg                   1/1     Running            0                127m
+kube-system   coredns-78fcd69978-wm7wq                   1/1     Running            0                127m
+kube-system   etcd-master                                1/1     Running            0                127m
+kube-system   kube-apiserver-master                      1/1     Running            0                127m
+kube-system   kube-controller-manager-master             1/1     Running            0                127m
+Step 7 – Join Worker Nodes to the Kubernetes Cluster
+After the successful pod network initialization, the Kubernetes cluster is ready to join the worker nodes. In this section, we will show you how to add both worker nodes to the Kubernetes cluster.
+
+You can use the kubeadm join command on each worker node to join them to the Kubernetes cluster.
+
+kubeadm join 69.28.88.236:6443 --token alfisa.guuc5t2f66cpqz8e --discovery-token-ca-cert-hash sha256:1db0bb5317ae1007c1f7774d5281d22b2189b239ffabecaedcd605613a9b10cd
+Once the worker node is joined to the cluster, you will get the following output:
+
+This node has joined the cluster:
+* Certificate signing request was sent to apiserver and a response was received.
+* The Kubelet was informed of the new secure connection details.
+
+Run kubectl get nodes on the control-plane to see this node join the cluster.
+If you forget the Kubernetes Cluster joining command, you can retrieve it any time using the following command on the master node:
+
+kubeadm token create --print-join-command
+You will get the Kubernetes Cluster joining command in the following output:
+
+kubeadm join 69.28.88.236:6443 --token alfisa.guuc5t2f66cpqz8e --discovery-token-ca-cert-hash sha256:1db0bb5317ae1007c1f7774d5281d22b2189b239ffabecaedcd605613a9b10cd 
+Next, go to the master node and run the following command to verify that both worker nodes have joined the cluster:
+
+kubectl get nodes
+If everything is set up correctly, you will get the following output:
+
+NAME      STATUS   ROLES                  AGE    VERSION
+master    Ready    control-plane,master   18m    v1.22.3
+worker1   Ready                     101s   v1.22.3
+worker2   Ready                     2m1s   v1.22.3
+You can also get the cluster information using the following command:
+
+kubectl cluster-info
+You will get the following output:
+
+Kubernetes control plane is running at https://69.28.88.236:6443
+CoreDNS is running at https://69.28.88.236:6443/api/v1/namespaces/kube-system/services/kube-dns:dns/proxy
+
+To further debug and diagnose cluster problems, use 'kubectl cluster-info dump'.
+
+At this point, the Kubernetes cluster is deployed and running fine. You can now proceed to the next step.
+Step 8 – Verify the Kubernetes Cluster
+After setting up the Kubernetes cluster, you can deploy any containerized application to your cluster. In this section, we will deploy an Nginx service on the cluster and see how it works.
+
+To test the Kubernetes cluster, we will use the Nginx image and create a deployment called nginx-web:
+
+kubectl create deployment nginx-web --image=nginx
+Wait for some time, then run the following command to verify the status of deployment:
+
+kubectl get deployments.apps
+If the deployment is in a ready state, you will get the following output:
+
+NAME        READY   UP-TO-DATE   AVAILABLE   AGE
+
+nginx-web   1/1     1            1           6s
+Next, scale the Nginx deployment with 4 replicas using the following command:
+
+kubectl scale --replicas=4 deployment nginx-web
+Wait for some time, then run the following command to verify the status of Nginx replicas:
+
+kubectl get deployments.apps nginx-web
+You will get the following output:
+
+NAME        READY   UP-TO-DATE   AVAILABLE   AGE
+nginx-web   4/4     4            4           40m
+To see the detailed information of your deployment, run:
+
+kubectl describe deployments.apps nginx-web
+Sample output:
+
+Name:                   nginx-web
+Namespace:              default
+CreationTimestamp:      Thu, 06 Jan 2022 05:49:41 +0000
+Labels:                 app=nginx-web
+Annotations:            deployment.kubernetes.io/revision: 1
+Selector:               app=nginx-web
+Replicas:               4 desired | 4 updated | 4 total | 4 available | 0 unavailable
+StrategyType:           RollingUpdate
+MinReadySeconds:        0
+RollingUpdateStrategy:  25% max unavailable, 25% max surge
+Pod Template:
+  Labels:  app=nginx-web
+  Containers:
+   nginx:
+    Image:        nginx
+    Port:         
+    Host Port:    
+    Environment:  
+    Mounts:       
+  Volumes:        
+Conditions:
+  Type           Status  Reason
+  ----           ------  ------
+  Progressing    True    NewReplicaSetAvailable
+  Available      True    MinimumReplicasAvailable
+OldReplicaSets:  
+NewReplicaSet:   nginx-web-5855c9859f (4/4 replicas created)
+Events:
+  Type    Reason             Age   From                   Message
+  ----    ------             ----  ----                   -------
+  Normal  ScalingReplicaSet  52s   deployment-controller  Scaled up replica set nginx-web-5855c9859f to 1
+  Normal  ScalingReplicaSet  30s   deployment-controller  Scaled up replica set nginx-web-5855c9859f to 4
+
+As you can see, the Nginx deployment has been scaled up successfully.
+
+Now, let’s create another pod named http-web and expose it via http-service with port 80 and NodePort as a type.
+
+First, create a pod using the command below:
+
+kubectl run http-web --image=httpd --port=80
+Next, run the following command to expose the above pod on port 80:
+
+kubectl expose pod http-web --name=http-service --port=80 --type=NodePort
+Wait for some time to bring up the pod then run the following command to check the status of the http-service:
+
+kubectl get service http-service
+You will get the following output:
+
+NAME           TYPE       CLUSTER-IP     EXTERNAL-IP   PORT(S)        AGE
+http-service   NodePort   10.109.210.63           80:31415/TCP   8s
+
+To get the detailed information of the service, run:
+
+kubectl describe service http-service
+You will get the following output:
+
+Name:                     http-service
+Namespace:                default
+Labels:                   run=http-web
+Annotations:              
+Selector:                 run=http-web
+Type:                     NodePort
+IP Family Policy:         SingleStack
+IP Families:              IPv4
+IP:                       10.109.210.63
+IPs:                      10.109.210.63
+Port:                       80/TCP
+TargetPort:               80/TCP
+NodePort:                   31415/TCP
+Endpoints:                10.244.1.4:80
+Session Affinity:         None
+External Traffic Policy:  Cluster
+Events:                   
+
+Next, run the following command to retrieve the IP address and the node on which the http-web pod is deployed:
+kubectl get pods http-web -o wide
+You will get all information in the following output:
+
+NAME       READY   STATUS    RESTARTS   AGE   IP           NODE      NOMINATED NODE   READINESS GATES
+http-web   1/1     Running   0          62s   10.244.1.4   worker1              
+As you can see, the http-web is deployed on the worker2 node and their IP address is 10.244.1.4.
+
+You can now use the curl command to verify the webserver using port 80:
+
+curl http://10.244.1.4:80
+If everything is set up correctly, you will get the following output:
+
+<html><body><h1>It works!</h1></body></html>
+Conclusion
+In this guide, we explained how to install and deploy a three-node Kubernetes cluster on Ubuntu 20.04 server. You can now add more worker nodes to scale the cluster if necessary. For more information, read the Kubernetes documentation. Try to deploy Kubernetes cluster today on your dedicated servers from Atlantic.Net!
+################################################################## get the dash boadrs #################################################
+
+Steps: I followed--
+Step 1: Log in to Ec2 machine using 
+ssh -i key.pem -L 8080:localhost:8080 ec2-user@ec2IP
+
+Step 2: Run the Below command to Enable the Dashboard
+
+kubectl apply -f https://raw.githubusercontent.com/kubernetes/dashboard/v2.7.0/aio/deploy/recommended.yaml
+
+Step 3: Create users and roles for the dashboard
+vi admin-user-service-account.yaml 
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: admin-user
+  namespace: kubernetes-dashboard
+
+vi admin-user-cluster-role-binding.yaml
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: admin-user
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: cluster-admin
+subjects:
+- kind: ServiceAccount
+  name: admin-user
+  namespace: kubernetes-dashboard
+
+#Run below command to create user
+kubectl apply -f admin-user-service-account.yaml -f admin-user-cluster-role-binding.yaml
+
+#output should look like below
+serviceaccount/admin-user created
+clusterrolebinding.rbac.authorization.k8s.io/admin-user created
+
+Ste4: Create Token for user
+kubectl -n kubernetes-dashboard create token admin-user
+#Output should look like
+
+eyJhbGciOiJSUzI1Ni
+
+Step 5: Run Below command for port fordwarding
+kubectl port-forward -n kubernetes-dashboard service/kubernetes-dashboard 8080:443
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

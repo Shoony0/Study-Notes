@@ -1,0 +1,81 @@
+ 2029  sudo nano first_pb.yml
+ 2030  ansible-playbook first_pb.yml
+ 2031  sudo nano first_pb.yml
+ 2032  ansible-playbook first_pb.yml
+ 2033  sudo nano first_pb.yml
+ 2034  ansible-playbook first_pb.yml
+ 2035  sudo nano first_pb.yml
+ 2036  ansible-playbook first_pb.yml
+ 2037  pwd
+ 2038  ls
+ 2039  sudo nano first_pb.yml
+ 2040  ansible-playbook first_pb.yml
+ 2041  ping 172.16.20.34
+ 2042  ansible-playbook first_pb.yml
+ 2043  sudo ansible-playbook first_pb.yml
+ 2044  ansible-playbook first_pb.yml
+ 2045  cd ..
+ 2046  ls
+ 2047  cat hosts 
+ 2048  sudo nano hosts 
+ 2049  ansible-playbook first_pb.yml
+ 2050  cd playbook/
+ 2051  ansible-playbook first_pb.yml
+ 2052  sudo nano hosts 
+ 2053  sudo nano ../hosts 
+ 2054  ansible-playbook first_pb.yml
+ 2055  ansible localhost -m ping
+ 2056  ansible 172.16.20.34 -m ping
+ 2057  sudo su
+ 2058  cd ..
+ 2059  ls
+ 2060  cat ansible.cfg
+ 2061  ansible-config init --disabled -t all > ansible.cfg 
+ 2062  sudo ansible-config init --disabled -t all > ansible.cfg 
+ 2063  ls
+ 2064  sudo mv playbook/ playbooks/
+ 2065  ls
+ 2066  cd playbooks/
+ 2067  ls
+ 2068  sudo nano first_pb.yml 
+ 2069  ansible-playbook first_pb.yml
+ 2070  ansible-playbook --syntax-check first_pb.yml
+ 2071  sudo nano first_pb.yml 
+ 2072  ansible-playbook --syntax-check first_pb.yml
+ 2073  sudo nano first_pb.yml 
+ 2074  ansible-playbook first_pb.yml
+ 2075  sudo nano app_install.yml
+ 2076  sudo vi app_install.yml 
+ 2077  ansible-playbook  --syntax-check app_install.yml 
+ 2078  ngnix
+ 2079  ansible-playbook  app_install.yml 
+ 2080  sudo vi app_install.yml 
+ 2081  sudo nano app_install.yml
+ 2082  ansible-playbook  app_install.yml 
+ 2083  sudo nano app_install.yml
+ 2084  ansible-playbook  app_install.yml 
+ 2085  sudo ansible-playbook  app_install.yml 
+ 2086  ngnix
+ 2087  nginx
+ 2088  sudo nginx
+ 2089  sudo systemctl stats ngnix
+ 2090  sudo systemctl stats nginx
+ 2091  sudo systemctl status nginx
+ 2092  cd ..
+ 2093  sudo nano hosts 
+ 2094  ansible-inventory --list
+ 2095  ansible all -m ping
+ 2096  sudo ansible all -m ping
+ 2097  history
+ 
+ ansible all -m command -a "df -a"
+ ansible all -m copy -a "src=/tmp/myfile.txt dest=/tmp/" -b --ask-become-pass
+ ansible-playbook 01_app_install.yml --list-tags
+ ansible-playbook 01_app_install.yml -t ss-nginx
+ ansible-playbook 01_app_install.yml --skip-tags ss-nginx
+ server34 ansible_host=172.16.20.108 ansible_user=iqgadmin ansible_password=zuionwar
+ ansible server34 -m setup
+ 
+ 
+ http://localhost:8080/pipeline-syntax/
+ 

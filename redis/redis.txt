@@ -1,0 +1,24 @@
+## docker container rm $(docker container ls -aq) -f
+# create a network
+
+docker network create redis-net
+
+# Redis master
+docker run -v ${PWD}/conf:/usr/local/etc/redis -v ${PWD}/data:/data -p 1111:6379 --name mymaster --network redis-net redis:5.0.9-alpine3.11 redis-server /usr/local/etc/redis/redis.conf
+
+# Master Sentinel
+docker run -v ${PWD}/conf:/bitnami/redis-sentinel/conf -p 11111:26379 --name master_sentinel --network redis-net bitnami/redis-sentinel:latest redis-sentinel /bitnami/redis-sentinel/conf/sentinel.conf --sentinel
+
+
+# Redis Slave1
+docker run -v ${PWD}/conf:/usr/local/etc/redis -v ${PWD}/data:/data -p 2222:6379 --name replica_1 --network redis-net redis:5.0.9-alpine3.11 redis-server /usr/local/etc/redis/redis.conf
+
+# Slave1 Sentinel
+docker run -v ${PWD}/conf:/bitnami/redis-sentinel/conf -p 22222:26379 --name slave1_sentinel --network redis-net bitnami/redis-sentinel:latest redis-sentinel /bitnami/redis-sentinel/conf/sentinel.conf --sentinel
+
+
+# Redis Slave2
+docker run -v ${PWD}/conf:/usr/local/etc/redis -v ${PWD}/data:/data -p 3333:6379 --name slave2 --network redis-net redis:5.0.9-alpine3.11 redis-server /usr/local/etc/redis/redis.conf
+
+# Slave2 Sentinel
+docker run -v ${PWD}/conf:/bitnami/redis-sentinel/conf -p 33333:26379 --name slave2_sentinel --network redis-net bitnami/redis-sentinel:latest redis-sentinel /bitnami/redis-sentinel/conf/sentinel.conf --sentinel
