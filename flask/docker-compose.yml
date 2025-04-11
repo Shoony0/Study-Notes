@@ -1,0 +1,62 @@
+version: "3"
+
+services:
+  web:
+    build: .
+    ports:
+      - "5000:80"
+    volumes:
+      - .:/app
+    depends_on:
+      - db
+      - redis
+    env_file:
+      - ./.env
+    networks:
+      - rest_api
+    
+  db:
+    image: postgres
+    restart: always
+    environment:
+      - POSTGRES_PASSWORD=abc123
+      - POSTGRES_DB=myapp
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - rest_api
+
+  redis:
+    image: redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    command: redis-server --appendonly yes
+    networks:
+      - rest_api
+
+  rq_worker:
+    build: .
+    container_name: rq_worker
+    restart: always
+    depends_on:
+      - redis
+      - web
+    environment:
+      - REDIS_URL=redis://redis:6379
+    volumes:
+      - .:/app
+    command: rq worker -u redis://redis:6379 emails
+    networks:
+      - rest_api
+
+volumes:
+  postgres_data:
+  redis_data:
+
+networks:
+  rest_api:
+
+
+# docker compose up --build --force-recreate --no-deps db
